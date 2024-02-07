@@ -4,6 +4,8 @@
 
 using namespace std;
 
+void testCollision();
+
 class student {
     private:
         float gpa;
@@ -26,18 +28,20 @@ class student {
 
 class hashItm {
     private:
+        int size;
         int hashid;
-        hashItm* next;
+        hashItm* next = NULL;
         student mystudent;
     public:
-        hashItm(int newid, hashItm* newNext, student newStudent) : hashid(newid), next(NULL), mystudent(newStudent) {
+        hashItm(student newStudent, int newsize) : mystudent(newStudent),  size(newsize) {
             float gpa = mystudent.getgpa();
-            hashid = gpa * 5;
+            hashid = (int) (gpa * 5) % size;
+            cout << "HashID: " << hashid << endl;
         }
-        int getid() {
+        int gethashid() {
             return hashid;
         }
-        void setid(int newid) {
+        void sethashid(int newid) {
             hashid = newid;
         }
         void setnext(hashItm* newnext) {
@@ -55,17 +59,75 @@ class hashTbl {
     private:
         int size;
         int count;
-        hashItm* table[];
+        bool rehash = false;
+        const int COLLISION = 3;
+        hashItm** table;
     public:
         hashTbl(int newsize) : size(newsize) {
-            table[size];
+            table = new hashItm*[size];
+            count = 0;
             for (int i = 0; i < newsize; i++) {
                 table[i] = NULL;
+                cout << "hashTbl Constructure table id i set to null: " << i << endl; 
+            }
+        }
+        int getsize() {
+            return size;
+        }
+        void addhashentry (hashItm* newitm) {
+            int length = 1;
+            int hashid = newitm->gethashid();
+            cout << "Hashid in hashTbl add entry: " << hashid << endl;
+            hashItm* current = table[hashid];
+            for (int i = 0; i < COLLISION; i++) {
+                cout << "in for loop, head: " << table[hashid] << endl;
+                if (table[hashid] == NULL) {
+                    table[hashid] = newitm;
+                    cout << "head is null" << endl;
+                    break;
+                }
+                else if (current->getnext() != NULL) {
+                    current = current->getnext();
+                    length++;
+                    cout << "increment length: " << length << endl;
+                }
+                else {
+                    cout << "in else" << endl;
+                    if (length < COLLISION) {
+                        current->setnext(newitm);
+                        cout << "Added Item" << endl;
+                        break;
+                    }
+                    else {
+                        rehash = true;
+                        cout << "Collision/May have dropped item, i: " << i << endl;
+                        break;
+                    }
+                }
             }
         }
         void printAll() {
             for (int i = 0; i < size; i++) {
                 cout << "i is: " << i << ", item is: " << table[i] << endl;
+
+                hashItm* current = NULL;
+
+                current = table[i];
+
+                if (current == NULL) {
+                    continue;
+                }
+
+                for (int i = 0; i < 3; i++) {
+                    if (current->getnext() == NULL) {
+                        current->getstudent().printStudent();
+                        break;
+                    }
+                    else {
+                        current->getstudent().printStudent();
+                        current = current->getnext();
+                    }
+                }
 
                 /*if (table[i] != NULL) {
                     cout << "i is: " << i << ", item is not null" << endl;
@@ -94,4 +156,51 @@ int main(void) {
     test.printStudent();
     hashTbl table = hashTbl(5);
     table.printAll();
+    testCollision();
+
+}
+
+void testCollision() {
+    cout << "TestColl" << endl;
+    hashTbl cTest = hashTbl(2);
+
+    int size = cTest.getsize();
+    cout << "size: " << size << endl;
+
+    student s1 = student(1, "s1");
+    student s2 = student(3, "s2");
+    student s3 = student(5, "s3");
+    student s4 = student(7, "s4");
+
+    //cout << s1.getname() << endl;
+    //cout << s2.getname() << endl;
+    //cout << s3.getname() << endl;
+    //cout << s4.getname() << endl;
+
+    hashItm* p1 = new hashItm(s1, size);
+    hashItm* p2 = new hashItm(s2, size);
+    hashItm* p3 = new hashItm(s3, size);
+    hashItm* p4 = new hashItm(s4, size);
+
+    //cout << p1->gethashid() << endl;
+    //cout << p2->gethashid() << endl;
+    //cout << p3->gethashid() << endl;
+    //cout << p4->gethashid() << endl;
+
+    //cout << "got here" << endl;
+
+    cTest.addhashentry(p1);
+    cout << "got here1" << endl;
+    cTest.addhashentry(p2);
+    cout << "got here2" << endl;
+    cTest.addhashentry(p3);
+    cout << "got here3" << endl;
+    cTest.addhashentry(p4);
+    cout << "got here4" << endl;
+
+    cout << "Test Coll End" << endl;
+
+    cout << endl;
+
+    cTest.printAll();
 }
