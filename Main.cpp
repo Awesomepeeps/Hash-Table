@@ -1,11 +1,19 @@
+//  This is a program that creates a hash table of students
+//  Created by: Nikaansh S.
+//  Last Edited: 2/8/24
+
 #include <iostream>
 #include <cstring>
 #include <string>
+#include <fstream>
+#include <ctime>
+#include <cstdlib>
 
 using namespace std;
 
-void testCollision();
+string readName(const string& filename);
 
+// Class for the student, stores name, gpa, and id
 class student {
     private:
         int id;
@@ -14,8 +22,8 @@ class student {
         string last;
         
     public:
-        student(int studentgpa, string studentfirst, string ssecond, int newid) : gpa(studentgpa), first(studentfirst), last(ssecond), id(newid) {}
-        void printStudent(void) {
+        student(float studentgpa, string studentfirst, string ssecond, int newid) : gpa(studentgpa), first(studentfirst), last(ssecond), id(newid) {}
+        void printStudent(void) { // Prints everything in the class
             cout << "gpa: " << gpa << endl;
             cout << "id: " << id << endl;
             cout << "First: " << first << endl;
@@ -29,6 +37,7 @@ class student {
         }
 };
 
+// Class for an item that will go in the hash table
 class hashItm {
     private:
         int size;
@@ -57,6 +66,7 @@ class hashItm {
         }
 };
 
+// Class That stores the hash and rehash table
 class hashTbl {
     private:
         int size;
@@ -66,27 +76,28 @@ class hashTbl {
         hashItm** hashretbl;
     public:
         hashTbl(int newsize) : size(newsize) {
-            table = new hashItm*[size];
-            for (int i = 0; i < newsize; i++) {
+            table = new hashItm*[size]; // Creates table
+            for (int i = 0; i < newsize; i++) { // Sets it all to null
                 table[i] = NULL;
             }       
         }
         void deleteTerm(int id, float gpa) {
-            int currentid = (int) (gpa * (size/4)) % size;
-            hashItm* current = table[currentid];
+            int currentid = (int) (gpa * (size/4)) % size; // Gets hashid from gpa
+            hashItm* current = table[currentid]; // Goes the hashid index in table
             hashItm* previous = current;
-            while(current != NULL) {
-                if (current->getstudent().getid() == id && table[currentid] == current) {
+
+            while(current != NULL) { // While there are items in index
+                if (current->getstudent().getid() == id && table[currentid] == current) {  // If current id matches studentid and is start of list
                     table[currentid] = current->getnext();
                     delete current;
                     break;
                 }
-                else if (current->getstudent().getid() == id) {
+                else if (current->getstudent().getid() == id) { // If current id matches studentid to be deleted
                     previous->setnext(current->getnext());
                     delete current;
                     break;
                 }
-                else {
+                else { // Go to next item
                     previous = current;
                     current = current->getnext();
                 }
@@ -97,31 +108,31 @@ class hashTbl {
         }
         void addhashentry (hashItm* newitm) {
             int length = 1;
-            int hashid = newitm->gethashid();
+            int hashid = newitm->gethashid(); // Gets index of item
             hashItm* current = table[hashid];
-            for (int i = 0; i < COLLISION; i++) {
-                if (table[hashid] == NULL) {
+
+            for (int i = 0; i < COLLISION; i++) { // Loops through current index
+                if (table[hashid] == NULL) { // If index is null
                     table[hashid] = newitm;
                     break;
                 }
-                else if (current->getnext() != NULL) {
+                else if (current->getnext() != NULL) { // If next is not null go to next item
                     current = current->getnext();
                     length++;
                 }
                 else {
-                    if (length < COLLISION) {
+                    if (length < COLLISION) { // Adds to list as long as it is under three
                         current->setnext(newitm);
                         break;
                     }
-                    else {
+                    else { // Sets rehash to true
                         rehash = true;
-                        cout << "Collision/May have dropped item, i: " << i << endl;
                         break;
                     }
                 }
             }
         }
-        void addrehashentry (hashItm* newitm) {
+        void addrehashentry (hashItm* newitm) { // Same as hash entry, just puts item in the rehash table
             int length = 1;
             int hashid = newitm->gethashid();
             hashItm* current = hashretbl[hashid];
@@ -146,25 +157,24 @@ class hashTbl {
             return rehash;
         }
         void printAll() {
-            cout << "in print all" << endl;
-            if (table == NULL) {
+            if (table == NULL) { // Checks for null table
                 return;
             }
-            for (int i = 0; i < size; i++) {
+            for (int i = 0; i < size; i++) { // Goes through table
                 hashItm* current = NULL;
                 current = table[i];
 
-                if (current == NULL) {
+                if (current == NULL) { // Checks current item
                     continue;
                 }
 
-                for (int i = 0; i < 3; i++) {
-                    if (current->getnext() == NULL) {
+                for (int i = 0; i < 3; i++) { // Goes through current index
+                    if (current->getnext() == NULL) { // End of index
                         current->getstudent().printStudent();
                         cout << endl;
                         break;
                     }
-                    else {
+                    else { // Middle of index
                         current->getstudent().printStudent();
                         cout << endl;
                         current = current->getnext();
@@ -178,49 +188,54 @@ class hashTbl {
         void setItemNull(int index) {
             table[index] == NULL;
         }
-        void rehashtbl() {
-            if (rehash != true) {
+        void rehashtbl() { // Rehashes the table
+            if (rehash != true) { // Checks if table needs to be rehashed
                 return;
             }
             
-            cout << "in rehash" << endl;
+            // Set new size and set rehash table
             int newsize = size * 10;
             hashretbl = new hashItm*[newsize];
             for (int i = 0; i < newsize; i++) {
                 hashretbl[i] = NULL;
             }   
+
             hashItm* current = NULL;
             hashItm* carrier = NULL;
-            for (int i = 0; i < size; i++) {
+
+            for (int i = 0; i < size; i++) { // Goes through current table
                 current = table[i];
-                while (current != NULL) {
-                    carrier = new hashItm(current->getstudent(), newsize);
-                    addrehashentry(carrier);
+                while (current != NULL) { // Goes through current index
+                    carrier = new hashItm(current->getstudent(), newsize); // Creates new hash item
+                    addrehashentry(carrier); // Adds new item to rehash table
                     hashItm* tmp = current;
-                    current = current->getnext();
-                    delete tmp;
+                    current = current->getnext(); // Goes to next item
+                    delete tmp; // Deletes item
                 }
             }
-            delete[] table;
-            table = hashretbl;
-            size = newsize;
+            delete[] table; // Deletes table
+            table = hashretbl; // Set table to rehash table
+            hashretbl = NULL; // Sets rehash pointer to null
+            size = newsize; // Updates size
             rehash = false;
         }
 };
 
 int main(void) {
-    int arrsize = 8;
+    srand(time(0));
+    int arrsize = 100;
     hashTbl mainTbl = hashTbl(arrsize);
-
-    //testCollision();
+    int itemcounter = 1;
 
     while(true) {
+        // Gets input
         char* input = new char(10);
-        cout << "add, delete, print or quit?" << endl; 
+        cout << "add, random, delete, print or quit?" << endl; 
         cin >> input;
         cout << endl;
 
-        if (strcmp(input, "add") == 0) {
+        if (strcmp(input, "add") == 0) { // If input is add
+            // Gets input from user
             char* firstName = new char(20);
             char* lastName = new char(20);
             float gpa;
@@ -235,17 +250,23 @@ int main(void) {
             cin >> gpa;
             cout << endl;
 
-            hashItm* newItem = new hashItm(student(gpa, firstName, lastName, gpa), arrsize);
+            // Create item
+            hashItm* newItem = new hashItm(student(gpa, firstName, lastName, studentId), arrsize);
 
+            // Add item to table
             mainTbl.addhashentry(newItem);
+            itemcounter++;
 
+            //Check for rehash
             if (mainTbl.getrebool() == true) {
                 mainTbl.rehashtbl();
                 mainTbl.addhashentry(newItem);
+                arrsize = arrsize * 10;
             }
 
         }
-        else if (strcmp(input, "delete") == 0) {
+        else if (strcmp(input, "delete") == 0) { // If input is delete
+            // Gets input from user
             int id;
             float gpa;
             cout << "Please enter the id of the student: " << endl;
@@ -253,14 +274,19 @@ int main(void) {
             cout << "Please enter the gpa of the student: " << endl;
             cin >> gpa;
             cout << endl;
+
+            // Deletes term
             mainTbl.deleteTerm(id, gpa);
+            itemcounter--;
         }
-        else if (strcmp(input, "quit") == 0) {
+        else if (strcmp(input, "quit") == 0) { // If input is quit
             hashItm* deleter = NULL;
             hashItm* dcurrent = NULL;
-            for (int i = 0; i < arrsize; i++) {
+
+            for (int i = 0; i < arrsize; i++) { // Loops through hash table
                 deleter = mainTbl.getItem(i);
-                while (deleter != NULL) {
+
+                while (deleter != NULL) { // Deletes until nothing left in current index
                     dcurrent = deleter->getnext();
                     deleter->setnext(NULL);
                     delete deleter;
@@ -270,56 +296,75 @@ int main(void) {
             }
             break;
         }
-        else if (strcmp(input, "print") == 0) {
+        else if (strcmp(input, "print") == 0) { // If input is print
             mainTbl.printAll();
+        }
+        else if (strcmp(input, "random") == 0) { // If input is random
+            cout << "How many do you want to add?" << endl;
+            int repetition = 0;
+            cin >> repetition;
+            cout << endl;
+
+            for (int i = 0; i < repetition; i++) {
+                string ffilename = "firstNames.txt";
+                string lfilename = "lastNames.txt";
+
+                // Gets random first and last name
+                string firstName = readName(ffilename);
+                string lastName = readName(lfilename);
+
+                //Gets a random gpa from 1-4
+                const int min = 1;
+                const int max = 4;
+                float randomNumber = min + rand() % (max - min + 1);
+                float randomNumber1 = min + rand() % (max - min + 1);
+                float randomNumber2 = min + rand() % (max - min + 1);
+                float randomgpa = randomNumber + (randomNumber1 / 10) + (randomNumber2 / 100);
+
+                //Creates and adds hash itm
+                hashItm* newItem = new hashItm(student(randomgpa, firstName, lastName, itemcounter), arrsize);
+
+                mainTbl.addhashentry(newItem);
+                itemcounter++;
+
+                // Checking for rehash
+                if (mainTbl.getrebool() == true) {
+                    mainTbl.rehashtbl();
+                    mainTbl.addhashentry(newItem);
+                    arrsize = arrsize * 10;
+                }
+            }
         }
     }
 }
 
-void testCollision() {
-    hashTbl cTest = hashTbl(2);
+// Gets a random name from file
+string readName(const string& filename) {
+    
+    // Creates a file
+    ifstream file(filename);
+    string name;
 
-    int size = cTest.getsize();
+    // Checks how many names are in the file
+    int counter = 0;
+    if (file.is_open()) {
+        while (getline(file, name)) {
+            counter++;
+        }
+    }
 
-    student s1 = student(1, "s1", "1", 1);
-    student s2 = student(3, "s2", "2", 2);
-    student s3 = student(5, "s3", "3", 3);
-    student s4 = student(7, "s4", "4", 4);
+    // Gets a random index
+    int randomIndex = rand() % counter;
 
-    //cout << s1.getname() << endl;
-    //cout << s2.getname() << endl;
-    //cout << s3.getname() << endl;
-    //cout << s4.getname() << endl;
+    // Get name at random index
+    if (file.is_open()) {
+        for (int i = 0; i < randomIndex; i++) {
+            getline(file, name);
+        }
+        file.close();
+    } else {
+        cout << "Unable to open file: " << filename << endl;
+    }
 
-    hashItm* p1 = new hashItm(s1, size);
-    hashItm* p2 = new hashItm(s2, size);
-    hashItm* p3 = new hashItm(s3, size);
-    hashItm* p4 = new hashItm(s4, size);
-
-    //cout << p1->gethashid() << endl;
-    //cout << p2->gethashid() << endl;
-    //cout << p3->gethashid() << endl;
-    //cout << p4->gethashid() << endl;
-
-    //cout << "got here" << endl;
-
-    cTest.addhashentry(p1);
-    cTest.addhashentry(p2);
-    cTest.addhashentry(p3);
-    cTest.addhashentry(p4);
-
-    cTest.printAll();
-
-    cTest.deleteTerm(s1.getid(), s1.getgpa());
-    cTest.deleteTerm(s2.getid(), s2.getgpa());
-
-    cout << "Delete 1 and 2" << endl;
-    cTest.printAll();
-
-    cTest.deleteTerm(s3.getid(), s3.getgpa());
-    cTest.deleteTerm(s4.getid(), s4.getgpa());
-
-    cout << "Delete 3 and 4" << endl;
-    cTest.printAll();
-    cout << "Delete all" << endl;
+    return name;
 }
