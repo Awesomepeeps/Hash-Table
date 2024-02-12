@@ -8,6 +8,7 @@
 #include <fstream>
 #include <ctime>
 #include <cstdlib>
+#include <vector>
 
 using namespace std;
 
@@ -193,6 +194,8 @@ class hashTbl {
                 return;
             }
             
+            cout << "Rehash in function" << endl; 
+
             // Set new size and set rehash table
             int newsize = size * 10;
             hashretbl = new hashItm*[newsize];
@@ -218,6 +221,8 @@ class hashTbl {
             hashretbl = NULL; // Sets rehash pointer to null
             size = newsize; // Updates size
             rehash = false;
+
+            cout << "end of rehash in function" << endl;
         }
 };
 
@@ -304,21 +309,20 @@ int main(void) {
             int repetition = 0;
             cin >> repetition;
             cout << endl;
+            
+            string ffilename = "firstNames.txt";
+            string lfilename = "lastNames.txt";
 
             for (int i = 0; i < repetition; i++) {
-                string ffilename = "firstNames.txt";
-                string lfilename = "lastNames.txt";
 
                 // Gets random first and last name
                 string firstName = readName(ffilename);
                 string lastName = readName(lfilename);
 
                 //Gets a random gpa from 1-4
-                const int min = 1;
-                const int max = 4;
-                float randomNumber = min + rand() % (max - min + 1);
-                float randomNumber1 = min + rand() % (max - min + 1);
-                float randomNumber2 = min + rand() % (max - min + 1);
+                float randomNumber = 1 + rand() % (4 - 1 + 1);
+                float randomNumber1 = 0 + rand() % (9 - 0 + 1);
+                float randomNumber2 = 0 + rand() % (9 - 0 + 1);
                 float randomgpa = randomNumber + (randomNumber1 / 10) + (randomNumber2 / 100);
 
                 //Creates and adds hash itm
@@ -329,6 +333,7 @@ int main(void) {
 
                 // Checking for rehash
                 if (mainTbl.getrebool() == true) {
+                    cout << "Rehash in random" << endl;
                     mainTbl.rehashtbl();
                     mainTbl.addhashentry(newItem);
                     arrsize = arrsize * 10;
@@ -342,29 +347,23 @@ int main(void) {
 string readName(const string& filename) {
     
     // Creates a file
-    ifstream file(filename);
+    ifstream file;
+    file.open(filename);
+    vector<string> names;
     string name;
-
-    // Checks how many names are in the file
-    int counter = 0;
-    if (file.is_open()) {
-        while (getline(file, name)) {
-            counter++;
-        }
-    }
-
-    // Gets a random index
-    int randomIndex = rand() % counter;
 
     // Get name at random index
     if (file.is_open()) {
-        for (int i = 0; i < randomIndex; i++) {
-            getline(file, name);
+        while (getline(file, name)) {
+            names.push_back(name);
         }
         file.close();
-    } else {
+    }
+    else {
         cout << "Unable to open file: " << filename << endl;
     }
 
-    return name;
+    // Gets a random index
+    int randomIndex = rand() % names.size();
+    return names[randomIndex];
 }
