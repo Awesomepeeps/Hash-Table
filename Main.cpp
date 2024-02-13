@@ -48,7 +48,7 @@ class hashItm {
     public:
         hashItm(student newStudent, int newsize) : mystudent(newStudent),  size(newsize) {
             float gpa = mystudent.getgpa();
-            hashid = (int) (gpa * (size/4)) % size;
+            hashid = (int) ((gpa * (size/4)) + mystudent.getid()) % size;
         }
         int gethashid() {
             return hashid;
@@ -83,7 +83,7 @@ class hashTbl {
             }       
         }
         void deleteTerm(int id, float gpa) {
-            int currentid = (int) (gpa * (size/4)) % size; // Gets hashid from gpa
+            int currentid = (int) ((gpa * (size/4)) + id) % size; // Gets hashid from gpa
             hashItm* current = table[currentid]; // Goes the hashid index in table
             hashItm* previous = current;
 
@@ -194,8 +194,6 @@ class hashTbl {
                 return;
             }
             
-            cout << "Rehash in function" << endl; 
-
             // Set new size and set rehash table
             int newsize = size * 10;
             hashretbl = new hashItm*[newsize];
@@ -221,8 +219,6 @@ class hashTbl {
             hashretbl = NULL; // Sets rehash pointer to null
             size = newsize; // Updates size
             rehash = false;
-
-            cout << "end of rehash in function" << endl;
         }
 };
 
@@ -333,7 +329,6 @@ int main(void) {
 
                 // Checking for rehash
                 if (mainTbl.getrebool() == true) {
-                    cout << "Rehash in random" << endl;
                     mainTbl.rehashtbl();
                     mainTbl.addhashentry(newItem);
                     arrsize = arrsize * 10;
